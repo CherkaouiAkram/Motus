@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, X, GamepadIcon } from "lucide-react"
+import { API_BASE_URL } from "@/lib/config"
 
 type User = {
   username: string
@@ -56,7 +57,7 @@ export function LoginSlidePanel({ isOpen, onClose, onLogin }: LoginSlidePanelPro
 
       if (isLogin) {
         const response  = await fetch(
-          "http://localhost:8080/auth/login", 
+          `${API_BASE_URL}/auth/login`, 
           {
             method: "POST",
             headers: {
@@ -70,7 +71,7 @@ export function LoginSlidePanel({ isOpen, onClose, onLogin }: LoginSlidePanelPro
       )
         if (response.ok) {
           const data: LoginResponse = await response.json();
-          const userInfo = await fetch("http://localhost:8080/api/user/me", {
+          const userInfo = await fetch(`${API_BASE_URL}/api/user/me`, {
             method: 'GET', 
             headers: {
               Authorization: `Bearer ${data.token}`,
@@ -92,7 +93,7 @@ export function LoginSlidePanel({ isOpen, onClose, onLogin }: LoginSlidePanelPro
         }
       } else {
 
-        const response =  await fetch("http://localhost:8080/auth/register", {
+        const response =  await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST', 
           headers: {
             'Content-type': 'application/json'
@@ -105,7 +106,7 @@ export function LoginSlidePanel({ isOpen, onClose, onLogin }: LoginSlidePanelPro
         } )
         
         if( response.ok ) {
-          const login =  await fetch("http://localhost:8080/auth/login", {
+          const login =  await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST', 
             headers: {
               'Content-type': 'application/json'

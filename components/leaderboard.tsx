@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ArrowLeft, Trophy, Medal, Award, Crown, Loader2 } from "lucide-react"
 import { LeaderboardEntry, User } from "@/lib/types"
+import { API_BASE_URL } from "@/lib/config"
 
 
 interface LeaderboardProps {
@@ -29,7 +30,7 @@ export function Leaderboard({ user, onBack }: LeaderboardProps) {
 
     try {
 
-      const response = await fetch("http://localhost:8080/api/wallofFame", {
+      const response = await fetch(`${API_BASE_URL}/api/wallofFame`, {
         headers:{
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,

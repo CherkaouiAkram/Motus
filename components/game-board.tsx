@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, RotateCcw, Send, Loader2 } from "lucide-react"
 import { Difficulty, GameResponse, LetterState, User } from "@/lib/types"
+import { API_BASE_URL } from "@/lib/config"
 
 interface GameBoardProps {
   user: User
@@ -43,17 +44,15 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
   const config = difficultyConfig[difficulty]
 
   useEffect(() => {
-    // Start game on mount and when difficulty changes
     const currentRequestId = ++requestIdRef.current
     startNewGame(currentRequestId)
 
     return () => {
-      // Cancel any ongoing request when component unmounts or difficulty changes
+    
       abortControllerRef.current?.abort()
     }
   }, [difficulty])
 
-  // Focus management
   useEffect(() => {
     if (!gameOver && !isLoading && inputRef.current) {
       inputRef.current.focus()
@@ -70,15 +69,12 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
     setIsInitializing(true)
     setError("")
 
-    // Cancel any previous request
     abortControllerRef.current?.abort()
     
-    // Create new abort controller
     const controller = new AbortController()
     abortControllerRef.current = controller
     const signal = controller.signal
     
-    // Reset all game state
     setAttempts([])
     setLetterStates([])
     setGameOver(false)
@@ -86,7 +82,7 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
     setCurrentGuess("")
 
     try {
-      const response = await fetch("http://localhost:8080/api/games/start", {
+      const response = await fetch(`${API_BASE_URL}/api/games/start`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +92,6 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
         signal
       })
 
-      // If a newer request has started, ignore this response
       if (requestId !== requestIdRef.current) return
       
       if (response.ok) {
@@ -109,12 +104,10 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
         throw new Error("Failed to start game")
       }
     } catch (error: any) {
-      // Only handle error if it's not an abort error
       if (error.name !== 'AbortError' && requestId === requestIdRef.current) {
         setError("Network error. Please try again.")
       }
     } finally {
-      // Only update state if this is the latest request
       if (requestId === requestIdRef.current) {
         setIsInitializing(false)
       }
@@ -139,16 +132,13 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
       const targetWord = currentWord
       const isCorrect = currentGuess === targetWord
 
-      // Generate letter states
       const guessLetters = currentGuess.split("")
       const targetLetters = targetWord.split("")
       const currentLetterStates: LetterState[] = new Array(guessLetters.length).fill("absent")
 
-      // Create arrays to track which positions have been used
       const targetUsed = new Array(targetLetters.length).fill(false)
       const guessProcessed = new Array(guessLetters.length).fill(false)
 
-      // First pass: Mark exact matches (correct position)
       for (let i = 0; i < guessLetters.length; i++) {
         if (guessLetters[i] === targetLetters[i]) {
           currentLetterStates[i] = "correct"
@@ -157,7 +147,6 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
         }
       }
 
-      // Second pass: Mark letters that exist but in wrong position
       for (let i = 0; i < guessLetters.length; i++) {
         if (!guessProcessed[i]) {
           for (let j = 0; j < targetLetters.length; j++) {
@@ -170,7 +159,6 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
         }
       }
 
-      // Update attempts and letter states
       const newAttempts = [...attempts, currentGuess]
       const newLetterStates = [...letterStates, currentLetterStates]
 
@@ -199,7 +187,7 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
 
   const submitEndGame = async (finalAttempts: number) => {
     try {
-      const response = await fetch("http://localhost:8080/api/games/end", {
+      const response = await fetch(`${API_BASE_URL}/api/games/end`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

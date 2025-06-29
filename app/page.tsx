@@ -8,6 +8,7 @@ import { Leaderboard } from "@/components/leaderboard"
 import { Navbar } from "@/components/navbar"
 import { Loader2 } from "lucide-react"
 import { User, GameState, Difficulty } from "@/lib/types"
+import { API_BASE_URL } from "@/lib/config";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
@@ -25,7 +26,7 @@ export default function Home() {
       const token = localStorage.getItem("authToken")
       if (token) {        
 
-        const response = await fetch("http://localhost:8080/auth/verify", {
+        const response = await fetch(`${API_BASE_URL}/auth/verify`, {
           method: "POST",
           headers: {
             // Authorization: `Bearer ${token}`,
@@ -38,7 +39,7 @@ export default function Home() {
 
         if (response.ok) {
 
-          const userInfo = await fetch("http://localhost:8080/api/user/me", {
+          const userInfo = await fetch(`${API_BASE_URL}/api/user/me`, {
             method: 'GET', 
             headers: {
               Authorization: `Bearer ${token}`,
