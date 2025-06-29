@@ -6,27 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ArrowLeft, Trophy, Medal, Award, Crown, Loader2 } from "lucide-react"
+import { LeaderboardEntry, User } from "@/lib/types"
 
-type User = {
-  id: string
-  username: string
-  email: string
-}
-
-type LeaderboardEntry = {
-  id: string
-  username: string
-  totalGames: number
-  wins: number
-  winRate: number
-  averageAttempts: number
-  bestStreak: number
-  currentStreak: number
-  totalScore: number
-  easyWins: number
-  mediumWins: number
-  hardWins: number
-}
 
 interface LeaderboardProps {
   user: User
@@ -47,146 +28,26 @@ export function Leaderboard({ user, onBack }: LeaderboardProps) {
     setIsLoading(true)
 
     try {
-      // Mock API call - hardcoded leaderboard data
-      await new Promise((resolve) => setTimeout(resolve, 800))
 
-      const mockLeaderboard: LeaderboardEntry[] = [
-        {
-          id: "1",
-          username: "testuser",
-          totalGames: 45,
-          wins: 38,
-          winRate: 84.4,
-          averageAttempts: 3.2,
-          bestStreak: 12,
-          currentStreak: 5,
-          totalScore: 1520,
-          easyWins: 15,
-          mediumWins: 18,
-          hardWins: 5,
-        },
-        {
-          id: "2",
-          username: "WordMaster",
-          totalGames: 120,
-          wins: 95,
-          winRate: 79.2,
-          averageAttempts: 3.5,
-          bestStreak: 18,
-          currentStreak: 0,
-          totalScore: 2850,
-          easyWins: 25,
-          mediumWins: 45,
-          hardWins: 25,
-        },
-        {
-          id: "3",
-          username: "PuzzleQueen",
-          totalGames: 89,
-          wins: 72,
-          winRate: 80.9,
-          averageAttempts: 3.1,
-          bestStreak: 15,
-          currentStreak: 8,
-          totalScore: 2340,
-          easyWins: 20,
-          mediumWins: 35,
-          hardWins: 17,
-        },
-        {
-          id: "4",
-          username: "LetterLord",
-          totalGames: 67,
-          wins: 48,
-          winRate: 71.6,
-          averageAttempts: 3.8,
-          bestStreak: 9,
-          currentStreak: 2,
-          totalScore: 1680,
-          easyWins: 18,
-          mediumWins: 22,
-          hardWins: 8,
-        },
-        {
-          id: "5",
-          username: "VocabViper",
-          totalGames: 156,
-          wins: 118,
-          winRate: 75.6,
-          averageAttempts: 3.6,
-          bestStreak: 14,
-          currentStreak: 3,
-          totalScore: 3120,
-          easyWins: 35,
-          mediumWins: 55,
-          hardWins: 28,
-        },
-        {
-          id: "6",
-          username: "WordWizard",
-          totalGames: 78,
-          wins: 59,
-          winRate: 75.6,
-          averageAttempts: 3.4,
-          bestStreak: 11,
-          currentStreak: 1,
-          totalScore: 1890,
-          easyWins: 22,
-          mediumWins: 28,
-          hardWins: 9,
-        },
-        {
-          id: "7",
-          username: "GuessGuru",
-          totalGames: 92,
-          wins: 65,
-          winRate: 70.7,
-          averageAttempts: 3.9,
-          bestStreak: 8,
-          currentStreak: 0,
-          totalScore: 1950,
-          easyWins: 28,
-          mediumWins: 25,
-          hardWins: 12,
-        },
-        {
-          id: "8",
-          username: "MotusChamp",
-          totalGames: 134,
-          wins: 89,
-          winRate: 66.4,
-          averageAttempts: 4.1,
-          bestStreak: 7,
-          currentStreak: 4,
-          totalScore: 2670,
-          easyWins: 40,
-          mediumWins: 35,
-          hardWins: 14,
-        },
-      ]
-
-      const response = await fetch("/api/leaderboard", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      const response = await fetch("http://localhost:8080/api/wallofFame", {
+        headers:{
           "Content-Type": "application/json",
-        },
-      }).catch(() => {
-        // Mock response for testing
-        return {
-          ok: true,
-          json: () => Promise.resolve({ leaderboard: mockLeaderboard }),
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         }
       })
 
-      const data = await response.json()
+      if( response.ok) {
+        const data : LeaderboardEntry[]  = await response.json();
+        console.log(data);
 
-      const sortedData = [...data.leaderboard].sort((a, b) => b.totalScore - a.totalScore)
-      setLeaderboardData(sortedData)
 
-      // Find current user's stats
-      const currentUserStats = sortedData.find((entry) => entry.username === user.username)
-      setUserStats(currentUserStats || null)
+        const sortedData = [...data].sort((a, b) => b.totalScore - a.totalScore)
+        setLeaderboardData(sortedData)
+
+        const currentUserStats = sortedData.find((entry) => entry.username === user.username)
+        setUserStats(currentUserStats || null)
+      }
+
     } catch (error) {
       console.error("Failed to fetch leaderboard:", error)
     } finally {

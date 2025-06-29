@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,23 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, RotateCcw, Send, Loader2 } from "lucide-react"
-
-type User = {
-  id: string
-  username: string
-  email: string
-}
-
-type Difficulty = "easy" | "medium" | "hard"
-
-type LetterState = "correct" | "present" | "absent" | "unknown"
-
-type GameResult = {
-  isCorrect: boolean
-  letterStates: LetterState[]
-  isGameOver: boolean
-  isWin: boolean
-}
+import { Difficulty, GameResponse, LetterState, User } from "@/lib/types"
 
 interface GameBoardProps {
   user: User
@@ -50,35 +33,52 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
   const [isWin, setIsWin] = useState(false)
   const [error, setError] = useState("")
   const [isInitializing, setIsInitializing] = useState(true)
-
-  // Add ref for input
+  const [gameId, setGameId] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
+  
+  // Track the current request ID
+  const requestIdRef = useRef(0)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const config = difficultyConfig[difficulty]
 
   useEffect(() => {
-    startNewGame()
+    // Start game on mount and when difficulty changes
+    const currentRequestId = ++requestIdRef.current
+    startNewGame(currentRequestId)
+
+    return () => {
+      // Cancel any ongoing request when component unmounts or difficulty changes
+      abortControllerRef.current?.abort()
+    }
   }, [difficulty])
 
-  // Add useEffect for auto-focus
+  // Focus management
   useEffect(() => {
     if (!gameOver && !isLoading && inputRef.current) {
       inputRef.current.focus()
     }
   }, [gameOver, isLoading, attempts.length])
 
-  // Also focus when game initializes
   useEffect(() => {
     if (!isInitializing && inputRef.current) {
       inputRef.current.focus()
     }
   }, [isInitializing])
 
-  const startNewGame = async () => {
+  const startNewGame = async (requestId: number) => {
     setIsInitializing(true)
     setError("")
 
-    // Reset all game state immediately
+    // Cancel any previous request
+    abortControllerRef.current?.abort()
+    
+    // Create new abort controller
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+    const signal = controller.signal
+    
+    // Reset all game state
     setAttempts([])
     setLetterStates([])
     setGameOver(false)
@@ -86,63 +86,38 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
     setCurrentGuess("")
 
     try {
-      // Mock API call - hardcoded response with random selection
-      const mockWordsPool = {
-        easy: [
-          { firstLetter: "C", word: "CATS" },
-          { firstLetter: "D", word: "DOGS" },
-          { firstLetter: "B", word: "BIRD" },
-          { firstLetter: "F", word: "FISH" },
-          { firstLetter: "T", word: "TREE" },
-        ],
-        medium: [
-          { firstLetter: "H", word: "HOUSE" },
-          { firstLetter: "W", word: "WORLD" },
-          { firstLetter: "P", word: "PLANT" },
-          { firstLetter: "S", word: "SMILE" },
-          { firstLetter: "M", word: "MUSIC" },
-        ],
-        hard: [
-          { firstLetter: "P", word: "PYTHON" },
-          { firstLetter: "C", word: "CASTLE" },
-          { firstLetter: "G", word: "GARDEN" },
-          { firstLetter: "W", word: "WINDOW" },
-          { firstLetter: "B", word: "BRIDGE" },
-        ],
-      }
-
-      const wordsPool = mockWordsPool[difficulty]
-      const randomIndex = Math.floor(Math.random() * wordsPool.length)
-      const mockData = wordsPool[randomIndex]
-
-      const response = await fetch("/api/game/new-word", {
+      const response = await fetch("http://localhost:8080/api/games/start", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
-        body: JSON.stringify({ difficulty }),
-      }).catch(() => {
-        // Mock response for testing
-        return {
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              firstLetter: mockData.firstLetter,
-              gameId: "mock-game-id",
-            }),
-        }
+        body: JSON.stringify({ difficulty: difficulty }),
+        signal
       })
 
-      const data = await response.json()
-
-      setFirstLetter(mockData.firstLetter)
-      setCurrentWord(mockData.word) // Store for game over display
-      setCurrentGuess(mockData.firstLetter)
-    } catch (error) {
-      setError("Network error. Please try again.")
+      // If a newer request has started, ignore this response
+      if (requestId !== requestIdRef.current) return
+      
+      if (response.ok) {
+        const data: GameResponse = await response.json()
+        setFirstLetter(data.word[0])
+        setCurrentWord(data.word)
+        setCurrentGuess(data.word[0])
+        setGameId(data.gameId)
+      } else {
+        throw new Error("Failed to start game")
+      }
+    } catch (error: any) {
+      // Only handle error if it's not an abort error
+      if (error.name !== 'AbortError' && requestId === requestIdRef.current) {
+        setError("Network error. Please try again.")
+      }
     } finally {
-      setIsInitializing(false)
+      // Only update state if this is the latest request
+      if (requestId === requestIdRef.current) {
+        setIsInitializing(false)
+      }
     }
   }
 
@@ -161,28 +136,10 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
     setError("")
 
     try {
-      // Use the current word instead of hardcoded lookup
       const targetWord = currentWord
-
-      const response = await fetch("/api/game/check-word", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-        body: JSON.stringify({
-          word: currentGuess,
-          difficulty,
-          attemptNumber: attempts.length + 1,
-        }),
-      }).catch(() => {
-        // Mock response for testing - keep existing logic
-        return { ok: true }
-      })
-
       const isCorrect = currentGuess === targetWord
 
-      // Generate letter states - CORRECTED ALGORITHM
+      // Generate letter states
       const guessLetters = currentGuess.split("")
       const targetLetters = targetWord.split("")
       const currentLetterStates: LetterState[] = new Array(guessLetters.length).fill("absent")
@@ -203,7 +160,6 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
       // Second pass: Mark letters that exist but in wrong position
       for (let i = 0; i < guessLetters.length; i++) {
         if (!guessProcessed[i]) {
-          // Look for this letter in unused positions of target
           for (let j = 0; j < targetLetters.length; j++) {
             if (!targetUsed[j] && guessLetters[i] === targetLetters[j]) {
               currentLetterStates[i] = "present"
@@ -221,12 +177,16 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
       setAttempts(newAttempts)
       setLetterStates(newLetterStates)
 
+      const finalAttempts = attempts.length + 1
+
       if (isCorrect) {
         setIsWin(true)
         setGameOver(true)
+        submitEndGame(finalAttempts)
       } else if (newAttempts.length >= config.maxAttempts) {
         setGameOver(true)
         setIsWin(false)
+        submitEndGame(finalAttempts)
       }
 
       setCurrentGuess(firstLetter)
@@ -234,6 +194,28 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
       setError("Network error. Please try again.")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const submitEndGame = async (finalAttempts: number) => {
+    try {
+      const response = await fetch("http://localhost:8080/api/games/end", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify({
+          nbAttempts: finalAttempts,
+          gameId: gameId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to end game")
+      }
+    } catch (error) {
+      setError("Network error. Please try again.")
     }
   }
 
@@ -257,11 +239,11 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
   const getLetterClassName = (state: LetterState) => {
     switch (state) {
       case "correct":
-        return "bg-green-500 text-white border-green-500"
+        return "bg-red-500 text-white border-red-500"
       case "present":
         return "bg-yellow-500 text-white border-yellow-500"
       case "absent":
-        return "bg-gray-400 text-white border-gray-400"
+        return "bg-blue-400 text-white border-blue-400"
       default:
         return "bg-white border-gray-300"
     }
@@ -296,7 +278,7 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={startNewGame}>
+            <Button variant="outline" onClick={() => startNewGame(++requestIdRef.current)}>
               <RotateCcw className="mr-2 h-4 w-4" />
               New Game
             </Button>
@@ -373,7 +355,7 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
             {/* Game Over Actions */}
             {gameOver && (
               <div className="flex justify-center gap-4 mt-6">
-                <Button onClick={startNewGame}>
+                <Button onClick={() => startNewGame(++requestIdRef.current)}>
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Play Again
                 </Button>
@@ -391,7 +373,7 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
           <CardContent className="pt-6">
             <div className="flex justify-center gap-8 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-500 rounded border"></div>
+                <div className="w-6 h-6 bg-red-500 rounded border"></div>
                 <span>Correct position</span>
               </div>
               <div className="flex items-center gap-2">
@@ -399,7 +381,7 @@ export function GameBoard({ user, difficulty, onBackToDashboard }: GameBoardProp
                 <span>Wrong position</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-400 rounded border"></div>
+                <div className="w-6 h-6 bg-blue-400 rounded border"></div>
                 <span>Not in word</span>
               </div>
             </div>

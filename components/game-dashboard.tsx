@@ -4,14 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Play, Trophy, Target, Zap } from "lucide-react"
+import { Difficulty, User } from "@/lib/types"
 
-type User = {
-  id: string
-  username: string
-  email: string
-}
 
-type Difficulty = "easy" | "medium" | "hard"
 
 interface GameDashboardProps {
   user: User
@@ -98,22 +93,22 @@ export function GameDashboard({ user, onStartGame }: GameDashboardProps) {
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                   <li>• Guess the hidden word within the allowed attempts</li>
                   <li>• The first letter is always revealed</li>
-                  <li>• Green: Correct letter in correct position</li>
+                  <li>• Red: Correct letter in correct position</li>
                   <li>• Yellow: Correct letter in wrong position</li>
-                  <li>• Gray: Letter not in the word</li>
+                  <li>• Blue: Letter not in the word</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Difficulty Levels:</h4>
                 <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                   <li>
-                    • <span className="font-medium text-green-600">Easy:</span> 4 letters, 6 attempts
+                    • <span className="font-medium text-red-600">Easy:</span> 4 letters, 6 attempts
                   </li>
                   <li>
                     • <span className="font-medium text-yellow-600">Medium:</span> 5 letters, 5 attempts
                   </li>
                   <li>
-                    • <span className="font-medium text-red-600">Hard:</span> 6 letters, 4 attempts
+                    • <span className="font-medium text-blue-600">Hard:</span> 6 letters, 4 attempts
                   </li>
                 </ul>
               </div>

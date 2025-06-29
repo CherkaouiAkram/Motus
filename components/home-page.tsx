@@ -4,12 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { GamepadIcon, Target, Zap, Trophy, Play, CheckCircle, Users, Brain, ArrowRight } from "lucide-react"
+import { User } from "@/lib/types"
 
-type User = {
-  id: string
-  username: string
-  email: string
-}
 
 interface HomePageProps {
   user: User | null
@@ -127,19 +123,19 @@ export function HomePage({ user, onPlayNow }: HomePageProps) {
                   </h4>
                   <ul className="space-y-2 text-gray-600 dark:text-gray-400">
                     <li className="flex items-start">
-                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="mr-2 h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                       The first letter of the word is always revealed
                     </li>
                     <li className="flex items-start">
-                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="mr-2 h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                       Guess the complete word within the allowed attempts
                     </li>
                     <li className="flex items-start">
-                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="mr-2 h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                       Each guess must be a valid word starting with the given letter
                     </li>
                     <li className="flex items-start">
-                      <CheckCircle className="mr-2 h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="mr-2 h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                       Use the color feedback to guide your next guess
                     </li>
                   </ul>
@@ -148,11 +144,11 @@ export function HomePage({ user, onPlayNow }: HomePageProps) {
                   <h4 className="font-semibold mb-4">Color Coding</h4>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-green-500 rounded border flex items-center justify-center text-white font-bold">
+                      <div className="w-8 h-8 bg-red-500 rounded border flex items-center justify-center text-white font-bold">
                         A
                       </div>
                       <span className="text-gray-600 dark:text-gray-400">
-                        <strong className="text-green-600">Green:</strong> Correct letter in correct position
+                        <strong className="text-red-600">Red:</strong> Correct letter in correct position
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -164,11 +160,11 @@ export function HomePage({ user, onPlayNow }: HomePageProps) {
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gray-400 rounded border flex items-center justify-center text-white font-bold">
+                      <div className="w-8 h-8 bg-blue-400 rounded border flex items-center justify-center text-white font-bold">
                         C
                       </div>
                       <span className="text-gray-600 dark:text-gray-400">
-                        <strong className="text-gray-600">Gray:</strong> Letter not in the word
+                        <strong className="text-blue-600">Blue:</strong> Letter not in the word
                       </span>
                     </div>
                   </div>

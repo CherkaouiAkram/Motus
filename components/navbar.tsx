@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { GamepadIcon } from "lucide-react"
 import { LoginSlidePanel } from "@/components/login-slide-panel"
+import { User } from "@/lib/types"
 
 interface NavbarProps {
-  user: { id: string; username: string; email: string } | null
-  onLogin: (user: { id: string; username: string; email: string }) => void
+  user: User| null
+  onLogin: (user: User) => void
   onLogout: () => void
   shouldOpenLogin?: boolean
   onLoginPanelClose?: () => void

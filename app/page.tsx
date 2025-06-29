@@ -7,14 +7,7 @@ import { GameBoard } from "@/components/game-board"
 import { Leaderboard } from "@/components/leaderboard"
 import { Navbar } from "@/components/navbar"
 import { Loader2 } from "lucide-react"
-
-type User = {
-  username: string
-  email: string
-}
-
-type GameState = "home" | "dashboard" | "playing" | "leaderboard"
-type Difficulty = "easy" | "medium" | "hard"
+import { User, GameState, Difficulty } from "@/lib/types"
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
@@ -75,7 +68,6 @@ export default function Home() {
     console.log(userData);
     setUser(userData)
     setShouldOpenLogin(false)
-    // If user clicked "Play Now" and then logged in, redirect to dashboard
     if (shouldOpenLogin) {
       setGameState("dashboard")
     }
@@ -92,7 +84,6 @@ export default function Home() {
     if (user) {
       setGameState("dashboard")
     } else {
-      // User needs to login first - trigger the login panel
       setShouldOpenLogin(true)
     }
   }
@@ -104,14 +95,6 @@ export default function Home() {
 
   const handleBackToDashboard = () => {
     setGameState("dashboard")
-  }
-
-  const handleBackToHome = () => {
-    setGameState("home")
-  }
-
-  const handleShowLeaderboard = () => {
-    setGameState("leaderboard")
   }
 
   const handleLoginPanelClose = () => {
