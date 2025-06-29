@@ -176,16 +176,6 @@ export function LoginSlidePanel({ isOpen, onClose, onLogin }: LoginSlidePanelPro
                 <CardDescription>
                   {isLogin ? "Sign in to continue playing" : "Join the Motus community"}
                 </CardDescription>
-                {/* {isLogin && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-700 font-medium">Test Credentials:</p>
-                    <p className="text-xs text-blue-600">
-                      Email: test@example.com
-                      <br />
-                      Password: password123
-                    </p>
-                  </div>
-                )} */}
               </CardHeader>
               <CardContent className="px-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
